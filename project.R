@@ -160,6 +160,7 @@ Simplex <- function(tableau){
     lastrow <-nrow(tableau)
     n<- ncol(tableau)
     while(TRUE) {
+      Iterations <-0
       pivcol<-0
       pivrow<-0
       pivelem <- 0
@@ -168,7 +169,7 @@ Simplex <- function(tableau){
       if(min(bottom) >= 0 ){ #same condition of checking if the bottom row has no more negative numbers
         break
       }
-      
+      iterations<- iterations + 1
       min <- 0 #same process of also finding the pivot column
       for(i in 1:(n-1)){
         if(tableau[nrow(tableau),i]<min){
@@ -204,7 +205,7 @@ Simplex <- function(tableau){
     finaltableau <- tableau
     optimalZ <- tableau[nrow(tableau),ncol(tableau)]
     basicSolution <- tableau[lastrow, (n - lastrow + 1):(n - 1)]
-    return(list(finaltableau = tableau, basicSolution = basicSolution, Z= optimalZ))
+    return(list(finaltableau = tableau, basicSolution = basicSolution, Z= optimalZ, iter = iterations))
 }
 test2_results = Simplex(init_tableau)
 print(test2_results)
