@@ -79,7 +79,7 @@ colnames(primal_table) <- c(
   paste("Hydro",block_plant_pair),
   paste("Oil",block_plant_pair),
   paste("Solar",block_plant_pair),
-  paste("Wind",block_plant_pair),
+  paste("Wind",block_plant_pair), 
   "RHS"
 )
 
@@ -99,9 +99,6 @@ rownames(primal_table) <- c(
   "CO2Cap",
   "ObjF(x)"
 )
-
-print(primal_table)
-
 #create the unselected rows
 
 build_matrix <- function(primal, selected, CO2_ON, CO2_limit){
@@ -125,7 +122,7 @@ build_matrix <- function(primal, selected, CO2_ON, CO2_limit){
   if(CO2_ON==FALSE){ #just checks if cO2 is false if it is false we remove the CO2 cap
     currmatrix <- currmatrix[rownames(currmatrix) != "CO2Cap", , drop=FALSE]
   } else {
-    currmatrix["CO2Cap", ncol(currmatrix)] <- CO2_limit #else we find the row  that has the name co2 cap and append it
+    currmatrix["CO2Cap", ncol(currmatrix)] <- -CO2_limit #else we find the row  that has the name co2 cap and append it
   }
   
   #this is where we transpose the matrix and then we insert the slack variables
@@ -143,22 +140,21 @@ build_matrix <- function(primal, selected, CO2_ON, CO2_limit){
   }
 
 
-test_case1 <- c("Coal","Nat.Gas","Hydro","Oil","Solar",'Wind')
-init_tableau<-build_matrix(primal_table,test_case1,FALSE,0)
-print(init_tableau)
-
-# print(final) #options(max.print = 100000) use this in the Rstudio terminal so that you can see the whole row :)
-
+#print(final) #options(max.print = 100000) use this in the Rstudio terminal so that you can see the whole row :)
 
 
 #test simplex
 
-Simplex <- function(tableau){
+Simplex <- function(tableau,namelist){
     #if problem is a minimization problem
     #the minimization problem has the similar flow as the maximization problem it just differs in the implementation and how to determine and arrange the solution numbers
     #also ensure that you are passing already transposed matrices as this code assumes that the matrix is already transpoed (similar to the handout given where the matrix was transposed already)
+    listlen <-length(namelist) #only gets the amount of rows since the amount of colums 6 is fixed
+    plantgroups <- c("Coal", "Nat.Gas", "Geo", "Hydro", "Oil", "Solar", "Wind")
+    tokeep <- plantgroups[plantgroups %in% namelist]
+    Iterations <- 0
     lastrow <-nrow(tableau)
-    n<- ncol(tableau)
+    n <- ncol(tableau)
     while(TRUE) {
       pivcol<-0
       pivrow<-0
@@ -168,6 +164,7 @@ Simplex <- function(tableau){
       if(min(bottom) >= 0 ){ #same condition of checking if the bottom row has no more negative numbers
         break
       }
+      Iterations <- Iterations + 1
       
       min <- 0 #same process of also finding the pivot column
       for(i in 1:(n-1)){
@@ -178,7 +175,7 @@ Simplex <- function(tableau){
       }
       
       currlowest <- Inf
-      curr<-0
+      curr<-0 
       for(y in 1:(nrow(tableau)-1)){ #same process of finding the pivot row
         if(tableau[y,pivcol] > 0){
           curr<-tableau[y,n] / tableau[y,pivcol]
@@ -188,11 +185,15 @@ Simplex <- function(tableau){
           }
         }
       } 
+      
+      if(pivrow == 0){ #checks if there is no pivrow and immediately exits the program as the problem is infeasible :3 
+        return(list(result=NaN,iter=Iterations-1))
+      }
 
       
       pivelem <- tableau[pivrow,pivcol] #same row normalization process
       tableau[pivrow, ] <- tableau[pivrow, ] / pivelem
-      for (z in 1:nrow(tableau)){
+      for (z in 1:nrow(tableau)){ 
         if (z != pivrow) {
           valtoelim <- tableau[z,pivcol]
           tableau[z, ] <- tableau[z, ] - (valtoelim * tableau [pivrow, ])
@@ -201,14 +202,40 @@ Simplex <- function(tableau){
     } 
     
     
-    finaltableau <- tableau
+    
+    finaltableau <-round(tableau,digits=2)
     optimalZ <- tableau[nrow(tableau),ncol(tableau)]
+    formattedZ <- format(round(optimalZ,digits=2),nsmall=2)
     basicSolution <- tableau[lastrow, (n - lastrow + 1):(n - 1)]
-    return(list(finaltableau = tableau, basicSolution = basicSolution, Z= optimalZ))
+    formattedbasicsol <- matrix(basicSolution,nrow=listlen,ncol=6,byrow=TRUE,dimnames = list(tokeep,paste0("B",1:6)))
+    
+    #shadowpricescalculation
+    m <- n - nrow(finaltableau) #gets the number of constraints in the tableau
+    S <- numeric(m) #creates a numericalvector the length of m
+    for (j in 1:m) { #this loops through each column 
+      col  <- finaltableau[, j] #gets each column in the matrix 
+      ones <- which(col == 1) #checks which rows in the col vector contain a 1                 
+      if (length(ones) == 1 && sum(col == 0) == lastrow - 1) { #verified if the whole column only contains a 1
+        S[j] <- finaltableau[ones, n] #reads the solution value (the last row) and extracts the value on that column
+      }
+    }
+    price <- S[1:6] / 4 #divides it                        
+    names(price) <- paste0("B", 1:6) #names the price vector
+    
+    return(list(finaltableau = finaltableau, basicSolution = formattedbasicsol,iter=Iterations, Z= optimalZ,shadowprice = price))
 }
-test2_results = Simplex(init_tableau)
-print(test2_results)
-# # colnames(test2_results$finaltableau) = c("s1", "s2", "x1", "x2", "Z", "Solution")
-# # colnames(test2_results$basicSolution) = c("s1", "s2", "x1", "x2", "Z")
-# print(test2_results)
+test_case1 <- c("Coal","Nat.Gas","Hydro","Oil","Solar",'Wind')
+init_tableau1<-build_matrix(primal_table,test_case1,FALSE,0)
 
+test_case2 <- c("Coal","Nat.Gas","Hydro","Oil","Geo",'Wind')
+init_tableau2<-build_matrix(primal_table,test_case2,TRUE,180000)
+
+test_case3 <- c("Coal","Nat.Gas","Hydro","Oil","Geo",'Wind')
+init_tableau3<-build_matrix(primal_table,test_case3,TRUE,165000)
+
+test_result1<-Simplex(init_tableau1,test_case1)
+test_result2<-Simplex(init_tableau2,test_case2)
+test_result3<-Simplex(init_tableau3,test_case3)
+print(test_result1[-1])
+print(test_result2[-1])
+print(test_result3)
