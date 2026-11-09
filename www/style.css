@@ -1,0 +1,60 @@
+h2{
+    color: black;
+    font-family: 'Roboto', sans-serif;
+    font-weight: bold;
+}
+h3{
+    color: black;
+    font-family: 'Roboto', sans-serif;
+    font-weight: regular;
+}
+
+.well{
+    background-color: antiquewhite;
+    border: 10px;
+    padding: 25px;
+}
+
+.shiny-input-checkboxgroup label{
+    font-family: 'Open Sans',sans-serif;
+    font-size: larger;
+    color:black
+}
+
+.shiny-text-output {
+  font-size: large;
+  font-weight: bold;
+  color: black;
+  background-color: antiquewhite;
+  padding: 10px;
+}
+
+#sol table, #price table {
+    background-color: antiquewhite !important;
+    color: black !important;
+    font-weight: bold !important;
+    font-family: 'Open Sans', sans-serif !important;
+    font-size: larger !important;
+    width: fit-content !important;
+    margin: 10px !important;
+    border: 1px solid black !important; /* Fixed: 'border: black;' is invalid CSS */
+}
+
+#sol th, #price th {
+    background-color: antiquewhite !important;
+    color: black !important;
+    font-weight: bold !important;
+    font-family: 'Roboto', sans-serif !important;
+    padding: 5px !important;
+    text-align: center !important;
+    border-bottom: 1px solid black !important;
+}
+
+#sol td, #price td {
+    background-color: antiquewhite !important;
+    color: black !important;
+    font-weight: bold !important;
+    font-family: 'Open Sans', sans-serif !important;
+    font-size: larger !important;
+    padding: 8px !important;
+}

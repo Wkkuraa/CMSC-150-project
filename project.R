@@ -187,7 +187,7 @@ Simplex <- function(tableau,namelist){
       } 
       
       if(pivrow == 0){ #checks if there is no pivrow and immediately exits the program as the problem is infeasible :3 
-        return(list(result=NaN,iter=Iterations-1))
+        return(list(Z=NaN,iter=Iterations-1))
       }
 
       
@@ -222,7 +222,7 @@ Simplex <- function(tableau,namelist){
     price <- S[1:6] / 4 #divides it                        
     names(price) <- paste0("B", 1:6) #names the price vector
     
-    return(list(finaltableau = finaltableau, basicSolution = formattedbasicsol,iter=Iterations, Z= optimalZ,shadowprice = price))
+    return(list(finaltableau = finaltableau, basicSolution = formattedbasicsol,iter=Iterations, Z= optimalZ, formatZ = formattedZ,shadowprice = price))
 }
 test_case1 <- c("Coal","Nat.Gas","Hydro","Oil","Solar",'Wind')
 init_tableau1<-build_matrix(primal_table,test_case1,FALSE,0)
